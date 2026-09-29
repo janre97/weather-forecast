@@ -1,93 +1,186 @@
-# Weather Forecast
+# Předpověď počasí
 
+Jednoduchá webová aplikace (SPA), která zobrazuje předpověď počasí na následujících pět dní
+pro zvolené město. Data čte z REST API [OpenWeatherMap](https://openweathermap.org/api) a
+běží čistě na straně klienta, bez vlastního serveru.
 
+## Funkce
 
-## Getting started
+- **Našeptávač měst.** Hledá od 2 znaků, bez ohledu na diakritiku a velikost písmen, a lze ho
+  ovládat myší i klávesnicí (↑ ↓ Enter Esc). Města ze země uživatele (odvozené z jazyka
+  prohlížeče) se řadí dřív.
+- **Předpověď v tabulce po dnech.** Pro každý den ukazuje min./max. teplotu, počasí,
+  pravděpodobnost a úhrn srážek, vítr a vlhkost. Kliknutím na den se rozbalí podrobnosti
+  po 3 hodinách.
+- **Aktuální stav.** Teplota, pocitová teplota, vítr, vlhkost, tlak a východ a západ slunce.
+- **Graf vývoje teploty.** Vlastní SVG bez knihoven, s tooltipem při najetí myší i při
+  ovládání šipkami.
+- **Předpověď pro aktuální polohu** přes Geolocation API.
+- **Reakce na změnu města.** Novou předpověď načte okamžitě. Při rychlém přepínání se starší
+  požadavky zruší, takže se vždy zobrazí naposledy zvolené město.
+- **Formátování podle kultury prohlížeče.** Data, časy a jednotky formátuje přes `Intl`
+  podle `navigator.language`, například `úterý 29. září 14:00` / `Tuesday, September 29 2:00 PM`.
+  Popisy počasí z API přicházejí ve stejném jazyce.
+  Časy předpovědi se zobrazují v místním čase zvoleného města.
+- **Sdílitelný odkaz.** Zvolené místo se ukládá do URL (`?city=3067696` nebo `?lat=…&lon=…`)
+  a do `localStorage`, takže po obnovení stránky zůstane zobrazené.
+- Světlý i tmavý režim podle nastavení systému, responzivní rozvržení a přístupnost
+  (ARIA, ovládání klávesnicí).
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Spuštění
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Potřebujete [Node.js](https://nodejs.org/) ve verzi 20.19 nebo novější.
 
-## Add your files
+```bash
+npm install
+npm run dev        # vývojový server na http://localhost:5173
+```
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### API klíč OpenWeatherMap
+
+Aplikace potřebuje bezplatný API klíč. Získáte ho po registraci na
+[openweathermap.org](https://home.openweathermap.org/users/sign_up) v sekci
+[API keys](https://home.openweathermap.org/api_keys). Nový klíč se může aktivovat až za
+několik hodin, do té doby API vrací chybu 401.
+
+Klíč lze zadat dvěma způsoby:
+
+1. **Přímo v aplikaci.** Po spuštění se zobrazí formulář a klíč se uloží do `localStorage`
+   prohlížeče.
+2. **Přes proměnnou prostředí** při sestavení:
+   ```bash
+   cp .env.example .env
+   # doplňte VITE_OWM_API_KEY=<váš klíč>
+   ```
+
+> Aplikace nemá backend, takže klíč sestavený přes `.env` je vidět ve výsledném JavaScriptu.
+> Pro veřejné nasazení proto doporučuji zadávat klíč v aplikaci.
+
+### Další příkazy
+
+| Příkaz              | Popis                                                      |
+| ------------------- | ---------------------------------------------------------- |
+| `npm run build`     | typová kontrola a produkční sestavení do `dist/`           |
+| `npm run preview`   | lokální náhled produkčního sestavení                       |
+| `npm test`          | unit a integrační testy (Vitest)                           |
+| `npm run typecheck` | typová kontrola TypeScriptem                               |
+| `npm run cities`    | znovu stáhne a připraví seznam měst z OpenWeatherMap       |
+
+Obsah složky `dist/` je statický web (jedna `index.html` + JS, CSS a JSON), který lze
+nasadit na libovolný statický hosting.
+
+## Podporované prohlížeče
+
+Poslední verze **Google Chrome**, **Microsoft Edge** a **Mozilla Firefox**, na desktopu i
+v mobilu. Aplikace byla ověřena v Chrome. Minimální verze jsou dané použitými funkcemi
+(ES2023, `Intl.NumberFormat` s `signDisplay: 'negative'`): Chrome/Edge 110+, Firefox 115+
+a Safari 16.4+.
+
+## Technologie
+
+- **React 19** + **TypeScript** (strict)
+- **Redux Toolkit** (stav) a **redux-saga** (vedlejší efekty: API, geolokace, ukládání)
+- **SCSS** (CSS moduly), **Vite** (build), **Vitest** (testy)
+- Žádné knihovny UI komponent ani grafů: našeptávač, tabulka i graf jsou vlastní.
+
+## Programovací přístup
+
+Celý kód je psaný **funkcionálně**:
+
+- žádné třídy, pouze funkce a neměnná data (`readonly` typy, reducery vrací nové objekty);
+- doménová logika jsou **čisté funkce** bez vedlejších efektů (vyhledávání měst, seskupení
+  předpovědi po dnech, formátování, geometrie grafu) a jsou pokryté testy;
+- vedlejší efekty (HTTP, `localStorage`, URL, geolokace) jsou izolované v **ságách** a
+  v tenké vrstvě `api/` a `lib/`;
+- chyby API se vrací jako hodnota (`Result<T>`), nevyhazují se jako výjimky;
+- odvozená data (dny, formátery) se počítají memoizovanými selektory.
+
+## Struktura projektu
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/janre97/weather-forecast.git
-git branch -M main
-git push -uf origin main
+public/data/city.list.min.json   seznam měst z OpenWeatherMap (samostatný JSON, načítá se za běhu)
+scripts/prepare-cities.mjs       stažení a minifikace seznamu měst
+
+src/
+├── main.tsx                     vstupní bod – vytvoří store a vykreslí <App />
+├── api/                         komunikace se světem (fetch), vrací Result<T>
+│   ├── owmApi.ts                  REST API OpenWeatherMap – /forecast, převod odpovědi
+│   └── citiesApi.ts               načtení JSON se seznamem měst
+├── app/                         skládání aplikace
+│   ├── store.ts                   Redux store, saga middleware, root sága
+│   ├── selectors.ts               memoizované selektory (dny předpovědi, formátery)
+│   └── hooks.ts                   typované useAppSelector / useAppDispatch
+├── features/                    doménové moduly (stav + logika)
+│   ├── cities/                    seznam měst a našeptávač
+│   │   ├── citySearch.ts            čisté funkce: normalizace, index, řazení výsledků
+│   │   ├── citiesSlice.ts           stav našeptávače
+│   │   └── citiesSaga.ts            načtení seznamu, hledání s debounce
+│   ├── forecast/                  předpověď
+│   │   ├── forecastTransform.ts     seskupení 3h kroků po dnech a denní souhrny
+│   │   ├── forecastSlice.ts         stav předpovědi a geolokace
+│   │   └── forecastSaga.ts          načítání (takeLatest + zrušení), geolokace, URL
+│   ├── chart/chartGeometry.ts     čisté výpočty grafu (měřítka, osy, SVG cesty)
+│   └── settings/settingsSlice.ts  API klíč a kultura prohlížeče
+├── components/                  prezentační React komponenty + jejich SCSS moduly
+│   ├── App.tsx                    rozvržení stránky a hlavička
+│   ├── CitySearch.tsx             našeptávač (WAI-ARIA combobox)
+│   ├── ForecastView.tsx           přepínání stavů: výzva / načítání / chyba / předpověď
+│   ├── CurrentConditions.tsx      aktuální počasí
+│   ├── TemperatureChart.tsx       graf teploty
+│   ├── ForecastTable.tsx          tabulka po dnech s rozbalením na 3h kroky
+│   └── ApiKeyForm.tsx, Button.tsx, WeatherIcon.tsx
+├── hooks/useElementWidth.ts     šířka elementu pro responzivní graf
+├── lib/                         obecné pomocné funkce
+│   ├── format.ts                  formátování přes Intl podle kultury prohlížeče
+│   ├── queryParams.ts             převod zvoleného místa do/z URL
+│   ├── geolocation.ts             Promise obálka nad Geolocation API
+│   └── storage.ts                 bezpečný přístup k localStorage
+└── styles/                      globální styly, barevné tokeny (světlý/tmavý režim), mixiny
 ```
 
-## Integrate with your tools
+### Tok dat
 
-* [Set up project integrations](https://gitlab.com/janre97/weather-forecast/-/settings/integrations)
+```
+uživatel píše do našeptávače
+  → akce queryChanged → citiesSaga (debounce 150 ms) → searchCities() → suggestionsFound
+uživatel vybere město
+  → akce forecastRequested → forecastSaga (takeLatest, zruší předchozí požadavek)
+  → fetchForecast() → forecastLoaded / forecastFailed → selektory → komponenty
+```
 
-## Collaborate with your team
+Seznam měst má přibližně 210 tisíc položek, proto se neukládá do Redux store. Index pro
+vyhledávání drží sága a ve store je jen stav načítání a aktuální návrhy.
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## Seznam měst
 
-## Test and Deploy
+Zdrojem pro našeptávač je oficiální
+[`city.list.json.gz`](https://bulk.openweathermap.org/sample/city.list.json.gz) od
+OpenWeatherMap. Skript `npm run cities` z něj připraví `public/data/city.list.min.json`:
+zachová schéma položek (`id`, `name`, `state`, `country`, `coord`), vynechá prázdná pole
+a zaokrouhlí souřadnice. Soubor tak zmenší ze 42 MB na 19 MB (přenášeno gzipem přibližně
+3,5 MB). Aplikace ho stahuje až za běhu (`fetch`), takže není součástí JS bundlu.
 
-Use the built-in continuous integration in GitLab.
+Názvy měst jsou v datech OWM převážně anglicky nebo v místní podobě bez aliasů. Praha je
+tedy uvedená jako *Prague* a *Hlavní město Praha* (najde se obojí), Plzeň jen jako *Pilsen*.
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## Splnění zadání
 
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+| Požadavek                                          | Řešení                                                   |
+| -------------------------------------------------- | -------------------------------------------------------- |
+| předpověď na 5 dní formou seznamu/tabulky          | `ForecastTable` – dny + rozbalení po 3 hodinách          |
+| minimálně předpověď teploty                        | teplota, pocitová teplota, srážky, vítr, vlhkost, tlak   |
+| volba města pomocí našeptávače                     | `CitySearch` + `citySearch.ts`                           |
+| reakce na změnu města                              | `forecastSaga` – `takeLatest` se zrušením požadavku      |
+| formátování podle kultury prohlížeče               | `lib/format.ts` – `Intl.*` s `navigator.language`        |
+| jedna HTML stránka + JS + statické zdroje          | `index.html`, build do `dist/`                           |
+| objektový nebo funkcionální přístup                | funkcionální, viz výše                                   |
+| bez knihoven třetích stran (mimo React, Redux, …)  | vlastní komponenty i graf                                |
+| Git historie                                       | vývoj po jednotlivých krocích v commitech                |
+| README                                             | tento soubor                                             |
+| města z JSON OWM jako samostatný soubor            | `public/data/city.list.min.json`                         |
+| data z REST API OpenWeatherMap                     | `api/owmApi.ts` – endpoint `/data/2.5/forecast`          |
+| *bonus:* graf teploty                              | `TemperatureChart` (vlastní SVG)                         |
+| *bonus:* geolokace                                 | tlačítko „Moje poloha“                                   |
+| *bonus:* JSON měst načítán online                  | `fetch` za běhu, mimo bundle                             |
+| *bonus:* HTML5, CSS3, SASS                         | sémantické HTML, CSS proměnné, grid, SCSS moduly         |
+| *bonus:* React, TypeScript, Redux, redux-saga      | ano                                                      |
