@@ -1,0 +1,101 @@
+@use '../styles/mixins' as *;
+
+.search {
+  position: relative;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.field {
+  position: relative;
+}
+
+.icon {
+  position: absolute;
+  top: 50%;
+  left: 0.9rem;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 1rem 0 2.6rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 1.05rem;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+
+  &:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+}
+
+.listbox {
+  @include card;
+
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: min(60vh, 420px);
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    background: var(--accent-soft);
+  }
+}
+
+.flag {
+  flex: none;
+  width: 1.4em;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.meta {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hint {
+  min-height: 1.4em;
+  margin: 0.35rem 0.25rem 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.error {
+  color: var(--danger);
+}
