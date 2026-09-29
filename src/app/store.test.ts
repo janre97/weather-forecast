@@ -50,7 +50,7 @@ describe('store + ságy', () => {
     expect(store.getState().forecast.status).toBe('succeeded');
     expect(store.getState().forecast.data?.city.name).toBe('Brno');
     const forecastCall = fetchMock.mock.calls.find(([url]) => String(url).includes('id=2'));
-    expect(String(forecastCall?.[0])).toContain('lang=cs');
+    expect(String(forecastCall?.[0])).toContain('lang=cz');
     expect(window.location.search).toBe('?city=2');
   });
 

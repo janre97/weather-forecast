@@ -9,11 +9,16 @@
 export const browserLocale = (): string =>
   (typeof navigator !== 'undefined' && (navigator.languages?.[0] ?? navigator.language)) || 'en';
 
-/** Kód jazyka pro parametr `lang` OpenWeatherMap API ("cs-CZ" → "cs", "zh-TW" → "zh_tw"). */
+/** OWM používá u některých jazyků vlastní kódy místo ISO 639-1 (např. čeština je "cz", ne "cs"). */
+const OWM_LANGUAGE_CODES: Readonly<Record<string, string>> = { cs: 'cz', ko: 'kr', lv: 'la' };
+
+/** Kód jazyka pro parametr `lang` OpenWeatherMap API ("cs-CZ" → "cz", "zh-TW" → "zh_tw"). */
 export const apiLanguage = (locale: string): string => {
   const [language = 'en', region = ''] = locale.toLowerCase().split('-');
   const withRegion = ['zh_cn', 'zh_tw', 'pt_br'];
-  return withRegion.includes(`${language}_${region}`) ? `${language}_${region}` : language;
+  return withRegion.includes(`${language}_${region}`)
+    ? `${language}_${region}`
+    : (OWM_LANGUAGE_CODES[language] ?? language);
 };
 
 /** Země z locale ("cs-CZ" → "CZ"), případně odhad z jazyka. */

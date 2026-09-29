@@ -31,7 +31,9 @@ describe('createFormatters', () => {
 
 describe('apiLanguage / localeCountry', () => {
   it('odvodí jazyk pro API a zemi z locale', () => {
-    expect(apiLanguage('cs-CZ')).toBe('cs');
+    expect(apiLanguage('cs-CZ')).toBe('cz');
+    expect(apiLanguage('ko')).toBe('kr');
+    expect(apiLanguage('de-AT')).toBe('de');
     expect(apiLanguage('zh-TW')).toBe('zh_tw');
     expect(localeCountry('cs-CZ')).toBe('CZ');
     expect(localeCountry('cs')).toBe('CZ');
