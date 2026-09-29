@@ -3,6 +3,7 @@ import { forecastRequested } from '../features/forecast/forecastSlice';
 import { Button } from './Button';
 import { CurrentConditions } from './CurrentConditions';
 import { ForecastTable } from './ForecastTable';
+import { TemperatureChart } from './TemperatureChart';
 import styles from './App.module.scss';
 
 interface ForecastViewProps {
@@ -46,6 +47,7 @@ export const ForecastView = ({ onChangeApiKey }: ForecastViewProps) => {
   return (
     <div className={`${styles.main} ${status === 'loading' ? styles.loading : ''}`} aria-busy={status === 'loading'}>
       <CurrentConditions forecast={data} />
+      <TemperatureChart forecast={data} />
       <ForecastTable timezoneOffset={data.city.timezoneOffset} />
     </div>
   );
