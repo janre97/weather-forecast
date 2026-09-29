@@ -13,6 +13,9 @@ export const buildIndex = (cities: readonly City[]): CityIndex =>
   cities.map((city) => ({ city, key: normalize(city.name) }));
 
 /**
+ * Řazení: nejdřív názvy začínající dotazem, pak shody na začátku dalšího slova.
+ * V rámci skupiny mají přednost města z preferované země, pak přesná shoda a kratší názvy.
+ *
  * Relevance shody: 0 = celý název, 1 = začátek názvu, 2 = začátek slova v názvu.
  * Shoda uprostřed slova se nepočítá (vracíme null).
  */
@@ -31,8 +34,9 @@ interface RankedCity {
 const compareRanked =
   (preferredCountry: string | undefined) =>
   (a: RankedCity, b: RankedCity): number =>
-    a.rank - b.rank ||
+    Number(a.rank === 2) - Number(b.rank === 2) ||
     Number(b.entry.city.country === preferredCountry) - Number(a.entry.city.country === preferredCountry) ||
+    a.rank - b.rank ||
     a.entry.key.length - b.entry.key.length ||
     a.entry.key.localeCompare(b.entry.key);
 
@@ -41,6 +45,13 @@ export interface SearchOptions {
   /** ISO kód země, jejíž města se mají řadit dříve (odvozený z jazyka prohlížeče). */
   readonly preferredCountry?: string;
 }
+
+/** Seznam OWM obsahuje duplicity (stejné jméno, země a téměř stejné souřadnice pod různými id). */
+const cityIdentity = ({ name, country, coord }: City): string =>
+  `${name}|${country}|${coord.lat.toFixed(2)}|${coord.lon.toFixed(2)}`;
+
+const isFirstOccurrence = (city: City, index: number, cities: readonly City[]): boolean =>
+  cities.findIndex((other) => cityIdentity(other) === cityIdentity(city)) === index;
 
 /** Vrátí nejrelevantnější města pro zadaný text našeptávače. */
 export const searchCities = (index: CityIndex, query: string, options: SearchOptions = {}): City[] => {
@@ -54,8 +65,9 @@ export const searchCities = (index: CityIndex, query: string, options: SearchOpt
       return rank === null ? [] : [{ entry, rank }];
     })
     .toSorted(compareRanked(preferredCountry?.toUpperCase()))
-    .slice(0, limit)
-    .map(({ entry }) => entry.city);
+    .map(({ entry }) => entry.city)
+    .filter(isFirstOccurrence)
+    .slice(0, limit);
 };
 
 /** Vlajka jako emoji z dvoupísmenného ISO kódu země ("CZ" → 🇨🇿). */

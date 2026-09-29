@@ -10,9 +10,11 @@ export interface CitiesState {
   readonly count: number;
   readonly query: string;
   readonly suggestions: readonly City[];
+  /** Dotaz, pro který byly naposledy spočítány návrhy (odlišuje „hledám“ od „nic nenalezeno“). */
+  readonly searchedQuery: string;
 }
 
-const initialState: CitiesState = { status: 'idle', error: null, count: 0, query: '', suggestions: [] };
+const initialState: CitiesState = { status: 'idle', error: null, count: 0, query: '', suggestions: [], searchedQuery: '' };
 
 const citiesSlice = createSlice({
   name: 'cities',
@@ -27,8 +29,19 @@ const citiesSlice = createSlice({
       query: action.payload,
       suggestions: action.payload.trim().length < 2 ? [] : state.suggestions,
     }),
-    suggestionsFound: (state, action: PayloadAction<readonly City[]>) => ({ ...state, suggestions: action.payload }),
-    suggestionsCleared: (state) => ({ ...state, suggestions: [] }),
+    suggestionsFound: (state, action: PayloadAction<{ query: string; cities: readonly City[] }>) => ({
+      ...state,
+      suggestions: action.payload.cities,
+      searchedQuery: action.payload.query,
+    }),
+    suggestionsCleared: (state) => ({ ...state, suggestions: [], searchedQuery: '' }),
+    /** Vybrané město – vyplní pole jeho názvem, ale nespouští nové hledání. */
+    citySelected: (state, action: PayloadAction<string>) => ({
+      ...state,
+      query: action.payload,
+      suggestions: [],
+      searchedQuery: '',
+    }),
   },
 });
 
@@ -40,5 +53,6 @@ export const {
   queryChanged,
   suggestionsFound,
   suggestionsCleared,
+  citySelected,
 } = citiesSlice.actions;
 export const citiesReducer = citiesSlice.reducer;

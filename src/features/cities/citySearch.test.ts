@@ -17,6 +17,7 @@ const cities = [
   city(5, 'Nová Paka'),
   city(6, 'Opava'),
   city(7, 'Prague', 'CZ'),
+  city(8, 'Praha', 'CZ'),
 ];
 const index = buildIndex(cities);
 const ids = (result: City[]) => result.map((c) => c.id);
@@ -44,8 +45,13 @@ describe('searchCities', () => {
     expect(ids(searchCities(index, 'pava'))).toEqual([]);
   });
 
+  it('vynechá duplicitní města', () => {
+    expect(ids(searchCities(index, 'praha'))).toEqual([1]);
+  });
+
   it('upřednostní preferovanou zemi a respektuje limit', () => {
     expect(ids(searchCities(index, 'prague', { preferredCountry: 'cz' }))).toEqual([7, 2]);
+    expect(ids(searchCities(index, 'pra', { preferredCountry: 'CZ' }))).toEqual([1, 7, 3, 2]);
     expect(searchCities(index, 'pra', { limit: 2 })).toHaveLength(2);
   });
 });

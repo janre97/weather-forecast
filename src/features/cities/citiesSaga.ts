@@ -33,7 +33,7 @@ function* loadCityIndex(): Generator<unknown, CityIndex> {
 
 function* searchWorker(index: CityIndex, preferredCountry: string | undefined) {
   const query = (yield select((state: RootState) => state.cities.query)) as string;
-  yield put(suggestionsFound(searchCities(index, query, { limit: 8, preferredCountry })));
+  yield put(suggestionsFound({ query, cities: searchCities(index, query, { limit: 8, preferredCountry }) }));
 }
 
 /**
